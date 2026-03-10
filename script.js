@@ -21,6 +21,20 @@ const ROOT_TAXA = [
     { id: 47170, name: "真菌界", desc: "Fungi", rank: "kingdom" }
 ];
 
+const TAXON_SHORTCUTS = [
+    { id: 3, name: "鸟纲", sci: "Aves", icon: "🦅", rank: "class" },
+    { id: 40151, name: "哺乳纲", sci: "Mammalia", icon: "🦁", rank: "class" },
+    { id: 47178, name: "鱼纲", sci: "Actinopterygii", icon: "🐟", rank: "class" },
+    { id: 26036, name: "爬行纲", sci: "Reptilia", icon: "🦎", rank: "class" },
+    { id: 20978, name: "两栖纲", sci: "Amphibia", icon: "🐸", rank: "class" },
+    { id: 47158, name: "昆虫纲", sci: "Insecta", icon: "🪲", rank: "class" },
+    { id: 47119, name: "蛛形纲", sci: "Arachnida", icon: "🕷️", rank: "class" },
+    { id: 47187, name: "软甲纲", sci: "Malacostraca", icon: "🦀", rank: "class" },
+    { id: 47125, name: "木兰纲", sci: "Magnoliopsida", icon: "🌺", rank: "class" },
+    { id: 47163, name: "百合纲", sci: "Liliopsida", icon: "🌾", rank: "class" },
+    { id: 136329, name: "松柏纲", sci: "Pinopsida", icon: "🌲", rank: "class" }
+];
+
 // 专业的地理分区配置 (完全去硬编码，依靠动态查询)
 const GEO_REGIONS = [
     {
@@ -90,6 +104,10 @@ const UI = {
     placeResults: document.getElementById('place-search-results'),
     mapSelectionText: document.getElementById('map-selection-text'),
     clearPlaceBtn: document.getElementById('clear-place-btn'),
+
+    taxonSearchInput: document.getElementById('taxon-search-input'),
+    taxonSearchResults: document.getElementById('taxon-search-results'),
+    taxonShortcuts: document.getElementById('taxon-shortcuts'),
 
     startBtn: document.getElementById('start-btn'),
     homeBtn: document.getElementById('home-btn'),
@@ -389,7 +407,9 @@ async function fetchTaxonProfile(taxonId, taxonName, latinName) {
 function initSetupUI() {
     UI.taxaTreeContainer.innerHTML = '';
     ROOT_TAXA.forEach(taxon => { UI.taxaTreeContainer.appendChild(createTreeNode(taxon, true)); });
-    initGeoTree(); // 渲染新的地理架构树
+    initGeoTree();
+    initTaxonShortcuts();
+    initTaxonSearch();
 
     if (State.placeId) {
         UI.mapSelectionText.textContent = State.placeName;
@@ -397,6 +417,82 @@ function initSetupUI() {
     }
 
     fetchTaxonProfile(State.baseTaxonId, State.baseTaxonName, State.baseTaxonSciName);
+}
+
+function selectTaxonById(id, name, sciName) {
+    State.baseTaxonId = id;
+    State.baseTaxonName = name;
+    State.baseTaxonSciName = sciName;
+    document.querySelectorAll('.tree-node-name').forEach(el => { el.classList.remove('text-teal-800', 'bg-teal-100', 'border-teal-300'); });
+    UI.currentTaxonDisplay.innerHTML = `${name} <span class="scientific-name text-sm font-normal text-gray-600">${sciName}</span>`;
+    // 高亮快捷入口按钮
+    document.querySelectorAll('.taxon-shortcut-btn').forEach(el => {
+        if (el.dataset.id == id) {
+            el.classList.remove('bg-white', 'text-gray-700', 'border-gray-200');
+            el.classList.add('bg-teal-600', 'text-white', 'border-teal-600');
+        } else {
+            el.classList.remove('bg-teal-600', 'text-white', 'border-teal-600');
+            el.classList.add('bg-white', 'text-gray-700', 'border-gray-200');
+        }
+    });
+    fetchTaxonProfile(id, name, sciName);
+}
+
+function initTaxonShortcuts() {
+    UI.taxonShortcuts.innerHTML = '';
+    TAXON_SHORTCUTS.forEach(s => {
+        const btn = document.createElement('button');
+        btn.className = 'taxon-shortcut-btn px-2.5 py-1 border rounded-lg text-[12px] font-medium transition shadow-sm flex items-center gap-1 hover:shadow-md '
+            + (State.baseTaxonId == s.id 
+                ? 'bg-teal-600 text-white border-teal-600' 
+                : 'bg-white text-gray-700 border-gray-200 hover:bg-teal-500 hover:text-white hover:border-teal-500');
+        btn.dataset.id = s.id;
+        btn.innerHTML = `${s.icon} ${s.name}`;
+        btn.onclick = () => selectTaxonById(s.id, s.name, s.sci);
+        UI.taxonShortcuts.appendChild(btn);
+    });
+}
+
+function initTaxonSearch() {
+    let searchTimeout;
+    UI.taxonSearchInput.addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        const query = e.target.value.trim();
+        if (query.length < 2) {
+            UI.taxonSearchResults.classList.add('hidden');
+            return;
+        }
+        searchTimeout = setTimeout(async () => {
+            try {
+                const res = await fetch(`https://api.inaturalist.org/v1/taxa/autocomplete?q=${encodeURIComponent(query)}&per_page=10&locale=zh-CN`);
+                const data = await res.json();
+                UI.taxonSearchResults.innerHTML = '';
+                if (data.results.length === 0) {
+                    UI.taxonSearchResults.innerHTML = '<div class="p-3 text-sm text-gray-500">未找到相关分类阶元</div>';
+                } else {
+                    data.results.forEach(taxon => {
+                        const div = document.createElement('div');
+                        div.className = "p-3 border-b hover:bg-teal-50 cursor-pointer text-sm text-gray-700 transition flex justify-between items-center";
+                        const cnName = taxon.preferred_common_name || '';
+                        const rankTag = taxon.rank ? `<span class="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded shrink-0">${Config.rankNames[taxon.rank] || taxon.rank}</span>` : '';
+                        div.innerHTML = `<div class="truncate pr-2"><strong>${cnName || taxon.name}</strong> <span class="text-xs text-gray-400 italic">${taxon.name}</span></div> ${rankTag}`;
+                        div.onclick = () => {
+                            selectTaxonById(taxon.id, cnName || taxon.name, taxon.name);
+                            UI.taxonSearchInput.value = '';
+                            UI.taxonSearchResults.classList.add('hidden');
+                        };
+                        UI.taxonSearchResults.appendChild(div);
+                    });
+                }
+                UI.taxonSearchResults.classList.remove('hidden');
+            } catch (err) { }
+        }, 400);
+    });
+    document.addEventListener('click', (e) => {
+        if (!UI.taxonSearchInput.contains(e.target) && !UI.taxonSearchResults.contains(e.target)) {
+            UI.taxonSearchResults.classList.add('hidden');
+        }
+    });
 }
 
 function createTreeNode(taxon, isRoot = false) {

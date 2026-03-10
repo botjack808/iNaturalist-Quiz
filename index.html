@@ -49,8 +49,30 @@
                         <i class="fa-solid fa-sitemap"></i> 1. 选定分类阶元
                     </h3>
 
+                    <!-- 阶元搜索与快捷入口 -->
+                    <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-4 flex flex-col gap-3">
+                        <div>
+                            <div class="text-xs text-blue-600 font-bold mb-1"><i
+                                    class="fa-solid fa-magnifying-glass"></i> 搜索阶元 (任何 iNaturalist 上的分类名)</div>
+                            <div class="relative">
+                                <input type="text" id="taxon-search-input" placeholder="输入分类名称，如 Felidae、蝴蝶..."
+                                    class="w-full bg-white border-2 border-blue-200 text-sm py-2 px-3 rounded-lg focus:outline-none focus:border-teal-500 transition shadow-inner">
+                                <div id="taxon-search-results"
+                                    class="absolute z-40 w-full bg-white border border-gray-200 rounded-lg mt-1 shadow-xl hidden max-h-48 overflow-y-auto">
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 快捷入口 -->
+                        <div class="pt-2 border-t border-blue-200/50">
+                            <div class="text-xs text-blue-600 font-bold mb-2"><i class="fa-solid fa-bolt"></i> 高频快捷入口</div>
+                            <div class="flex flex-wrap gap-1.5" id="taxon-shortcuts">
+                                <!-- JS 动态渲染 -->
+                            </div>
+                        </div>
+                    </div>
+
                     <div id="taxa-tree-container"
-                        class="h-[250px] overflow-y-auto bg-white border border-gray-200 rounded-xl p-3 shadow-inner text-sm mb-4">
+                        class="h-[200px] overflow-y-auto bg-white border border-gray-200 rounded-xl p-3 shadow-inner text-sm mb-4">
                         <!-- 树状图生成区 -->
                     </div>
 
