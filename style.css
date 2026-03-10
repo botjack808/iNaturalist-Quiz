@@ -1,0 +1,184 @@
+body {
+            background-color: #f4fdf8;
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .scientific-name {
+            font-style: italic;
+            color: #4b5563;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.4s ease-in-out forwards;
+        }
+
+        .slide-up {
+            animation: slideUp 0.5s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .option-btn {
+            transition: all 0.2s ease;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 3px;
+        }
+
+        /* 维基百科内容清洗器与美化排版 */
+        .wiki-content {
+            color: #374151;
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        .wiki-content table {
+            width: 100% !important;
+            border-collapse: collapse;
+            margin-bottom: 1.5rem;
+            display: block;
+            overflow-x: auto;
+            font-size: 0.85rem;
+        }
+
+        .wiki-content th,
+        .wiki-content td {
+            border: 1px solid #cbd5e1;
+            padding: 0.5rem 0.75rem;
+            text-align: left;
+        }
+
+        .wiki-content th {
+            background-color: #f1f5f9;
+            font-weight: bold;
+            color: #0f766e;
+        }
+
+        .wiki-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 0.5rem;
+            display: block;
+            margin: 1rem auto;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .wiki-content figure {
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .wiki-content figcaption {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 0.5rem;
+        }
+
+        .wiki-content .infobox {
+            float: right;
+            margin: 0 0 1.5rem 1.5rem;
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            width: 320px;
+            max-width: 100%;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        @media (max-width: 768px) {
+            .wiki-content .infobox {
+                float: none;
+                margin: 1.5rem auto;
+                width: 100%;
+            }
+        }
+
+        .wiki-content h2,
+        .wiki-content h3 {
+            font-weight: bold;
+            color: #0f766e;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+        }
+
+        .wiki-content h2 {
+            font-size: 1.5rem;
+        }
+
+        .wiki-content h3 {
+            font-size: 1.25rem;
+            border-bottom: none;
+        }
+
+        .wiki-content p {
+            margin-bottom: 1.25rem;
+        }
+
+        .wiki-content a {
+            color: #0284c7;
+            text-decoration: none;
+            pointer-events: none;
+        }
+
+        .wiki-content ul,
+        .wiki-content ol {
+            padding-left: 1.5rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .wiki-content ul {
+            list-style-type: disc;
+        }
+
+        .wiki-content ol {
+            list-style-type: decimal;
+        }
+
+        .wiki-content .mw-empty-elt,
+        .wiki-content .reference,
+        .wiki-content .mw-editsection,
+        .wiki-content .noprint,
+        .wiki-content .navbox {
+            display: none !important;
+        }

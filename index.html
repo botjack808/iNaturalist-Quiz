@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌿 博物学家图鉴大挑战 - 典藏终极版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="text-gray-800 min-h-screen flex flex-col selection:bg-teal-200">
+
+    <!-- 顶部导航条 -->
+    <header class="bg-teal-700 text-white shadow-md p-4 sticky top-0 z-30">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl md:text-2xl font-bold flex items-center gap-2 cursor-pointer" onclick="returnToHome()">
+                <i class="fa-solid fa-microscope"></i> 博物学家图鉴
+            </h1>
+            <div class="flex items-center gap-3">
+                <button id="home-btn"
+                    class="hidden text-sm md:text-base font-medium bg-teal-600 hover:bg-teal-500 px-3 py-1.5 rounded-lg transition flex items-center gap-1 border border-teal-500"
+                    onclick="returnToHome()">
+                    <i class="fa-solid fa-rotate-left"></i> <span class="hidden sm:inline">重新选题</span>
+                </button>
+                <div id="score-board"
+                    class="hidden text-sm md:text-base font-semibold bg-teal-800 px-4 py-1.5 rounded-full shadow-inner flex items-center gap-2">
+                    <span id="current-q-display" class="mr-2 text-teal-200"></span>
+                    <span>得分:</span><span id="score-display" class="text-green-300">0</span>
+                    <span id="limit-display" class="text-teal-200 ml-1"></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主容器 -->
+    <main class="flex-grow flex flex-col items-center p-4 relative w-full">
+
+        <!-- 界面 1: 设置与题库选择面板 -->
+        <div id="setup-screen" class="max-w-6xl w-full glass-panel rounded-2xl p-6 md:p-8 slide-up">
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+                <!-- 左半部：分类树与档案 -->
+                <div class="flex flex-col h-full">
+                    <h3
+                        class="text-lg font-bold text-teal-800 mb-3 flex items-center gap-2 border-b-2 border-teal-100 pb-2">
+                        <i class="fa-solid fa-sitemap"></i> 1. 选定分类阶元
+                    </h3>
+
+                    <div id="taxa-tree-container"
+                        class="h-[250px] overflow-y-auto bg-white border border-gray-200 rounded-xl p-3 shadow-inner text-sm mb-4">
+                        <!-- 树状图生成区 -->
+                    </div>
+
+                    <!-- 动态加载的节点档案 -->
+                    <div class="flex-1 bg-teal-50 border border-teal-200 rounded-xl p-4 flex flex-col">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <span class="text-xs text-gray-500 font-bold uppercase">当前选中库</span>
+                                <div id="current-taxon-display" class="text-lg font-bold text-teal-900 mt-0.5">
+                                    鸟纲 <span class="scientific-name text-sm font-normal">Aves</span>
+                                </div>
+                            </div>
+                            <span id="taxon-obs-count"
+                                class="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded shadow-sm"></span>
+                        </div>
+                        <div id="taxon-wiki-summary"
+                            class="wiki-content flex-1 overflow-y-auto pr-2 border-t border-teal-200/50 pt-2 text-sm">
+                            点击上方的分类树节点，此处将显示阶元概述。
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右半部：地理、过滤与开始 -->
+                <div class="flex flex-col h-full">
+                    <h3
+                        class="text-lg font-bold text-teal-800 mb-3 flex items-center gap-2 border-b-2 border-teal-100 pb-2">
+                        <i class="fa-solid fa-map-location-dot"></i> 2. 限定野生栖息地
+                    </h3>
+
+                    <!-- 强大的自动补全地理搜索框与体系树 -->
+                    <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-4 flex flex-col gap-3">
+                        <div>
+                            <div class="text-xs text-blue-600 font-bold mb-1"><i
+                                    class="fa-solid fa-magnifying-glass"></i> 自定义检索 (任何 iNaturalist 上的地点名)</div>
+                            <div class="relative">
+                                <input type="text" id="place-search-input" placeholder="输入你想锁定的任何精确地点..."
+                                    class="w-full bg-white border-2 border-blue-200 text-sm py-2 px-3 rounded-lg focus:outline-none focus:border-teal-500 transition shadow-inner">
+                                <div id="place-search-results"
+                                    class="absolute z-40 w-full bg-white border border-gray-200 rounded-lg mt-1 shadow-xl hidden max-h-48 overflow-y-auto">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 结构化的生态分区树 (纯API寻的，无硬编码) -->
+                        <div id="geo-tree-container"
+                            class="mt-2 pt-3 border-t border-blue-200/50 max-h-[17rem] overflow-y-auto pr-2 space-y-4">
+                            <!-- 结构树由 JS 动态渲染 -->
+                        </div>
+
+                        <!-- 选定的地点展示区 -->
+                        <div id="selected-place-container"
+                            class="bg-white p-3 rounded-lg border border-dashed border-blue-300 flex items-center justify-between mt-1 shadow-sm">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-location-dot text-red-500"></i>
+                                <span class="text-sm font-medium text-gray-700">当前限定区系：</span>
+                                <span id="map-selection-text"
+                                    class="text-sm font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">全球
+                                    (无限定)</span>
+                            </div>
+                            <button id="clear-place-btn"
+                                class="hidden text-xs text-red-500 hover:text-white hover:bg-red-500 px-2 py-1 rounded transition border border-red-200">
+                                清除限定
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 属性过滤与启动 -->
+                    <div class="bg-gray-50 rounded-xl p-4 border border-gray-200 flex-1 flex flex-col justify-between">
+                        <div>
+                            <div class="text-xs text-gray-500 font-bold mb-2 uppercase tracking-wider">难度控制 (Rarity)
+                            </div>
+                            <div class="flex gap-2 mb-4">
+                                <button
+                                    class="rarity-btn flex-1 py-1.5 rounded bg-teal-600 text-white text-sm font-medium shadow-sm"
+                                    data-val="common" onclick="setRarity('common', this)">🟢 常见代表种</button>
+                                <button
+                                    class="rarity-btn flex-1 py-1.5 rounded bg-white text-gray-600 border border-gray-300 text-sm font-medium hover:bg-gray-100"
+                                    data-val="uncommon" onclick="setRarity('uncommon', this)">🟡 进阶种</button>
+                                <button
+                                    class="rarity-btn flex-1 py-1.5 rounded bg-white text-gray-600 border border-gray-300 text-sm font-medium hover:bg-gray-100"
+                                    data-val="rare" onclick="setRarity('rare', this)">🔴 罕见种</button>
+                            </div>
+
+                            <div class="text-xs text-gray-500 font-bold mb-2 uppercase tracking-wider">生态属性锁 (生态学严格过滤)
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                <label
+                                    class="flex items-center gap-1 text-sm bg-white border border-gray-300 px-3 py-1.5 rounded cursor-pointer hover:bg-green-50 hover:border-green-300 transition">
+                                    <input type="checkbox" id="chk-native" class="accent-green-500" checked
+                                        onchange="if(this.checked) document.getElementById('chk-introduced').checked = false;">
+                                    🌳 纯本土原生
+                                </label>
+                                <label
+                                    class="flex items-center gap-1 text-sm bg-white border border-gray-300 px-3 py-1.5 rounded cursor-pointer hover:bg-purple-50 hover:border-purple-300 transition">
+                                    <input type="checkbox" id="chk-introduced" class="accent-purple-500"
+                                        onchange="if(this.checked) document.getElementById('chk-native').checked = false;">
+                                    🛸 外来入侵
+                                </label>
+                                <label
+                                    class="flex items-center gap-1 text-sm bg-white border border-gray-300 px-3 py-1.5 rounded cursor-pointer hover:bg-red-50 hover:border-red-300 transition">
+                                    <input type="checkbox" id="chk-threatened" class="accent-red-500"> ⚠️ 濒危
+                                </label>
+                            </div>
+                            <p class="text-[10px] text-gray-400 mt-2 leading-tight">
+                                注：勾选『纯本土原生』后，系统将依据名录剔除所有跨洲引进和逃逸归化种，严格匹配栖息地。</p>
+                            <div class="text-xs text-gray-500 font-bold mb-2 mt-4 uppercase tracking-wider">测验长度
+                            </div>
+                            <div class="flex gap-2">
+                                <button
+                                    class="limit-btn flex-1 py-1.5 rounded bg-white text-gray-600 border border-gray-300 text-sm font-medium hover:bg-gray-100"
+                                    data-val="5" onclick="setLimit(5, this)">5 题</button>
+                                <button
+                                    class="limit-btn flex-1 py-1.5 rounded bg-teal-600 text-white border border-gray-300 text-sm font-medium shadow-sm"
+                                    data-val="10" onclick="setLimit(10, this)">10 题</button>
+                                <button
+                                    class="limit-btn flex-1 py-1.5 rounded bg-white text-gray-600 border border-gray-300 text-sm font-medium hover:bg-gray-100"
+                                    data-val="20" onclick="setLimit(20, this)">20 题</button>
+                                <button
+                                    class="limit-btn flex-1 py-1.5 rounded bg-white text-gray-600 border border-gray-300 text-sm font-medium hover:bg-gray-100"
+                                    data-val="0" onclick="setLimit(0, this)">∞ 无尽</button>
+                            </div>
+                        </div>
+
+                        <button id="start-btn"
+                            class="w-full mt-6 bg-teal-600 hover:bg-teal-700 text-white text-lg font-bold py-3.5 px-6 rounded-xl shadow-lg transition transform hover:-translate-y-1 flex justify-center items-center gap-2">
+                            <i class="fa-solid fa-play"></i> 进入野外测验
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- 界面 2: 答题与解析区域 -->
+        <div id="quiz-screen" class="hidden max-w-4xl w-full glass-panel rounded-2xl p-4 md:p-6 relative">
+
+            <div id="loading-overlay"
+                class="absolute inset-0 bg-white/95 z-20 flex flex-col items-center justify-center rounded-2xl hidden">
+                <i class="fa-solid fa-satellite-dish fa-beat text-5xl text-teal-600 mb-4"></i>
+                <p class="text-lg text-teal-800 font-bold mb-2">正在前往栖息地检索研究级记录...</p>
+                <p class="text-sm text-gray-500">已应用生态锁：彻底排除笼养宠物、并核对本土分布名录</p>
+            </div>
+
+            <div id="question-area" class="flex-col gap-5">
+                <div
+                    class="w-full bg-black rounded-xl overflow-hidden shadow-inner flex items-center justify-center relative h-64 sm:h-80 md:h-[450px]">
+                    <div id="image-spinner" class="absolute inset-0 flex items-center justify-center text-white/50 z-0">
+                        <i class="fa-solid fa-spinner fa-spin text-3xl"></i>
+                    </div>
+                    <img id="species-image" src="" class="w-full h-full object-contain relative z-10 hidden fade-in"
+                        referrerpolicy="no-referrer">
+                </div>
+                <h2 class="text-center text-lg md:text-xl font-bold text-gray-800 mt-4 mb-2">图中展示的是哪种野生生物？</h2>
+                <div id="options-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4"></div>
+            </div>
+
+            <!-- 解析区 -->
+            <div id="result-panel" class="hidden mt-6 pt-6 border-t-2 border-teal-100 fade-in">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 id="result-title" class="text-2xl font-bold flex items-center gap-2"></h3>
+                    <button id="next-btn"
+                        class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 px-6 rounded-lg shadow transition flex items-center gap-2">
+                        下一题 <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <div
+                    class="bg-teal-50 rounded-xl p-5 border border-teal-100 flex flex-col md:flex-row gap-6 justify-between items-center">
+                    <div class="space-y-3 text-sm md:text-base flex-1 w-full">
+                        <div class="flex items-center"><span
+                                class="w-20 text-gray-500 font-bold shrink-0">中文名</span><span id="detail-zh"
+                                class="font-bold text-teal-900 text-xl"></span></div>
+                        <div class="flex items-center"><span
+                                class="w-20 text-gray-500 font-bold shrink-0">英文俗名</span><span id="detail-en"
+                                class="text-gray-700"></span></div>
+                        <div class="flex flex-col bg-white p-3 rounded-lg shadow-sm border border-gray-200 mt-2">
+                            <span class="text-gray-500 font-bold text-xs mb-1 uppercase">学名 (拉丁文)</span>
+                            <span id="detail-la"
+                                class="scientific-name font-bold text-gray-800 text-lg tracking-wide"></span>
+                        </div>
+                    </div>
+
+                    <div
+                        class="shrink-0 w-full md:w-auto text-center md:text-right flex flex-col items-center md:items-end gap-3">
+                        <span id="result-obs-count"
+                            class="text-sm font-bold text-blue-600 bg-blue-100 px-4 py-1.5 rounded-full shadow-inner"><i
+                                class="fa-solid fa-eye"></i> 0 记录</span>
+
+                        <div class="flex flex-col gap-2 w-full">
+                            <button onclick="openFullWikiModal()"
+                                class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition transform hover:-translate-y-1 flex items-center justify-center gap-2 border-2 border-blue-400">
+                                <i class="fa-solid fa-book-journal-whills text-xl"></i> 阅览完整文献
+                            </button>
+                            <a id="result-orig-link" href="#" target="_blank" title="打开原网页"
+                                class="w-full md:w-auto text-teal-700 hover:text-teal-900 bg-teal-100 hover:bg-teal-200 font-medium py-2 px-4 rounded-xl transition flex items-center justify-center gap-1 border border-teal-300">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i> 访问 iNat 原记录
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 胜利/结算提示框 -->
+            <div id="victory-panel" class="hidden mt-6 bg-yellow-50 border-2 border-yellow-400 rounded-xl p-5 text-center fade-in">
+                <h2 class="text-2xl font-bold text-yellow-700 mb-2"><i class="fa-solid fa-trophy"></i> 测验完成！</h2>
+                <p class="text-gray-700 mb-4" id="victory-stats"></p>
+                <button onclick="returnToHome()"
+                    class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2.5 px-8 rounded-lg shadow-md transition mx-auto inline-flex items-center gap-2">
+                    <i class="fa-solid fa-rotate-left"></i> 返回首页重新挑战
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- 二级页面：完整维基百科 / iNat Modal -->
+    <div id="wiki-modal"
+        class="fixed inset-0 bg-black/85 z-50 hidden flex-col items-center justify-center p-2 md:p-6 fade-in">
+        <div
+            class="bg-white rounded-2xl w-full max-w-5xl h-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl relative">
+
+            <!-- Modal 头部：包含双源切换 -->
+            <div class="p-4 border-b flex flex-wrap justify-between items-center bg-teal-800 text-white shrink-0 gap-3">
+                <h3 class="text-lg md:text-xl font-bold flex items-center gap-3">
+                    <i class="fa-solid fa-book-bookmark text-teal-300 text-2xl"></i>
+                    <span id="modal-title" class="tracking-wide">博物文献载入中...</span>
+                </h3>
+
+                <div class="flex items-center gap-2 md:gap-4 w-full md:w-auto justify-end">
+                    <!-- 数据源切换 Tab -->
+                    <div class="bg-teal-900 rounded-lg p-1 flex text-sm shadow-inner">
+                        <button id="tab-wiki" onclick="switchModalSource('wiki')"
+                            class="px-3 py-1.5 rounded bg-teal-600 text-white font-bold transition">Wikipedia</button>
+                        <button id="tab-inat" onclick="switchModalSource('inat')"
+                            class="px-3 py-1.5 rounded text-teal-300 hover:text-white transition">iNaturalist</button>
+                    </div>
+
+                    <!-- 关闭按钮 -->
+                    <button onclick="closeWikiModal()"
+                        class="text-white hover:text-red-300 transition bg-red-500/80 hover:bg-red-500 px-3 py-1.5 rounded-lg flex items-center gap-1 font-medium text-sm">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="p-5 md:p-8 overflow-y-auto flex-1 bg-white wiki-content" id="modal-content">
+                <!-- 加载动画或内容 -->
+            </div>
+
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
